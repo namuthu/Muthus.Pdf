@@ -58,6 +58,7 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="wwwroot\Output\" />
+    <Folder Include="wwwroot\Output\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

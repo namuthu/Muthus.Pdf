@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Hosting;
 using iText.Forms;
 using iText.Forms.Fields;
 using Newtonsoft.Json;
+using iText.Kernel.Pdf.Annot;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -87,7 +88,7 @@ namespace MPdf.Service.Controllers
         //}
 
         // PUT api/values/5
-        [HttpPost("{id}/FillForm")]
+         [HttpPost("{id}/FillForm")]
         public FileStreamResult FillForm(int id, [FromBody] PdfFormFieldCollection value)
         {
             string tempFile = GetTempFilePath();
@@ -98,11 +99,42 @@ namespace MPdf.Service.Controllers
                 {
                     PdfAcroForm form = PdfAcroForm.GetAcroForm(pdfDoc, true);
                     form.SetGenerateAppearance(true);
-                    //foreach (var field in value)
-                    //{
-                    //    var pdfField = form.GetField(field.Name);
-                    //    pdfField.SetValue(field.Value);
-                    //}
+                    foreach (var field in value)
+                    {
+                        var pdfField = form.GetField(field.Name);
+                        pdfField.SetValue(field.Value);
+                    }
+                    pdfDoc.Close();
+                }
+            }
+
+            return new FileStreamResult(new FileStream(tempFile, FileMode.Open), "application/pdf");
+
+
+
+        }
+
+
+        [HttpGet("{id}/Annotate")]
+        public FileStreamResult Annotate(int id)
+        {
+            string tempFile = GetTempFilePath();
+            using (PdfReader reader = new PdfReader(GetFilePath()))
+            {
+                reader.SetUnethicalReading(true);
+                using (PdfDocument pdfDoc = new PdfDocument(reader, new PdfWriter(tempFile)))
+                {
+                    PdfAcroForm pdfForm = PdfAcroForm.GetAcroForm(pdfDoc, true);
+                    //var list = pdfForm.GetPdfObject().Values();
+                    
+                    foreach (var de in pdfForm.GetFormFields())
+                    {
+                        var formField = de.Value;
+                        PdfAnnotation text = PdfAnnotation.MakeAnnotation(formField.GetPdfObject()); //, PdfAnnotation.(){ , new Rectangle(200f, 250f, 300f, 350f), "Fox", "The fox is quick", true, "Comment");
+                        if(text != null )
+                            text.s( new PdfString(de.Key));
+                        //fields.Add(new PdfFormField() { Name = de.Key, Value = formField.GetValueAsString() });
+                    }
                     pdfDoc.Close();
                 }
             }
